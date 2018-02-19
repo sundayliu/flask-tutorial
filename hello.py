@@ -2,7 +2,7 @@
 
 from flask import Flask,render_template,session,redirect,url_for,flash
 from flask import request
-from flask_script import Manager
+from flask_script import Manager,Shell
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
@@ -74,7 +74,10 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 505
-    
+
+def make_shell_context():
+    return dict(app=app,db=db,User=User,Role=Role)
+manager.add_command("shell",Shell(make_context=make_shell_context))
 if __name__ == '__main__':
     #print(__name__)
     #app.run(debug=True)
