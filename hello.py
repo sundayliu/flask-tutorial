@@ -7,6 +7,7 @@ from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from flask_migrate import Migrate,MigrateCommand
 from wtforms import StringField,SubmitField
 from wtforms.validators import Required
 
@@ -25,6 +26,8 @@ manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app,db)
+manager.add_command('db',MigrateCommand)
 
 # Model
 class Role(db.Model):
