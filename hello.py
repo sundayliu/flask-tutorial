@@ -8,10 +8,12 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_migrate import Migrate,MigrateCommand
+from flask_mail import Mail,Message
 from wtforms import StringField,SubmitField
 from wtforms.validators import Required
 
 from datetime import datetime
+from threading import Thread
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -21,13 +23,35 @@ app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:123456@127.0.0.1:3306/flasky'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587  # TLS port / SSL port:465
+app.config['MAIL_USERNAME'] = 'pythonflaskytest' # os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = 'pythonflaskytest'
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[Flasky]'
+app.config['FLASKY_MAIL_SENDER'] = 'Flasky Admin<pythonflaskytest@gmail.com>'
+app.config['FLASKY_ADMIN'] = 'pythonflaskytest@gmail.com'
 
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+mail = Mail(app)
 migrate = Migrate(app,db)
 manager.add_command('db',MigrateCommand)
+
+# mail
+def send_async_email(app,msg):
+    with app.app_context():
+        mail.send(msg)
+def send_email(to,subject,template,**kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject,
+        sender=app.config['FLASKY_MAIL_SENDER'],
+        recipients=[to])
+    msg.body = render_template(template + ".txt",**kwargs)
+    msg.html = render_template(template + ".html", **kwargs)
+    thr = Thread(target=send_async_email,args=[app,msg])
+    thr.start()
+    return thr
 
 # Model
 class Role(db.Model):
