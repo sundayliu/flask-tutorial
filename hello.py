@@ -5,17 +5,43 @@ from flask import request
 from flask_script import Manager
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
+from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField,SubmitField
 from wtforms.validators import Required
 
 from datetime import datetime
+import os
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard to guess string'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:123456@127.0.0.1:3306/flasky'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+db = SQLAlchemy(app)
+
+# Model
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(64),unique=True)
+    users = db.relationship('User',backref='role',lazy='dynamic')
+    def __repr__(self):
+        return '<Role %r>' % self.name
+        
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer,primary_key=True)
+    username = db.Column(db.String(64),unique=True,index=True)
+    role_id = db.Column(db.Integer,db.ForeignKey('roles.id'))
+    def __repr__(self):
+        return '<User %r>' % self.username
 
 class NameForm(FlaskForm):
     name = StringField('What is your name?',validators=[Required()])
@@ -47,5 +73,5 @@ def internal_server_error(e):
     
 if __name__ == '__main__':
     #print(__name__)
-    app.run(debug=True)
-    #manager.run()
+    #app.run(debug=True)
+    manager.run()
