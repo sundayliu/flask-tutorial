@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 from datetime import datetime
-from flask import render_template,session,redirect,url_for
-from flask_login import login_required
+from flask import render_template,session,redirect,url_for,flash
+from flask_login import login_required,current_user
 
 from . import main
 from .forms import NameForm,EditProfileForm,EditProfileAdminForm
 from .. import db
-from ..models import User,Permission
+from ..models import User,Permission,Role
 
 from ..decorators import admin_required,permission_required
 
@@ -27,7 +27,7 @@ def for_moderators_only():
 @admin_required
 def edit_profile_admin(id):
     user = User.query.get_or_404(id)
-    form = EditProfileAdminForm()
+    form = EditProfileAdminForm(user)
     if form.validate_on_submit():
         user.email = form.email.data
         user.username = form.username.data
@@ -49,16 +49,17 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html',form=form,user=user)
 
 
-@main.route('edit-profile',methods=['GET','POST'])
+@main.route('/edit-profile',methods=['GET','POST'])
 @login_required
 def edit_profile():
-    form = EditProfileForm
+    form = EditProfileForm()
     if form.validate_on_submit():
         current_user.name = form.name.data
-        current_user.localtion = form.location.data
+        current_user.location = form.location.data
         current_user.about_me = form.about_me.data
         db.session.add(current_user)
         flash('Your profile has been updated.')
+        flash('User location:%s' % current_user.location)
         return redirect(url_for('main.user', username=current_user.username))
     form.name.data = current_user.name
     form.location.data = current_user.location
@@ -70,6 +71,7 @@ def user(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
+    flash("user location:%s" % user.location)
     return render_template('user.html',user=user)
 
 

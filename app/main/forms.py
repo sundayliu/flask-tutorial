@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField,TextAreaField,BooleanField,SelectField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired,Length,Regexp,Email,Required
+from ..models import Role
 
 
 class NameForm(FlaskForm):
